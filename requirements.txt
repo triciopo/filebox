@@ -1,0 +1,10 @@
+python-multipart
+fastapi
+SQLAlchemy
+pydantic[dotenv]
+starlette
+httpx
+psycopg2
+aiofiles
+aioshutil
+uvicorn
