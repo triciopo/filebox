@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 from starlette import status
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.middleware.cors import CORSMiddleware
@@ -7,6 +9,7 @@ from starlette.responses import Response
 from starlette.types import ASGIApp
 
 from filebox.core.config import settings
+from filebox.rate_limiter import limiter
 from filebox.routers.api import router
 
 
@@ -43,5 +46,8 @@ app.add_middleware(
 )
 
 app.add_middleware(LimitUploadSize)
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.include_router(router, prefix=settings.API_PREFIX, tags=["files"])

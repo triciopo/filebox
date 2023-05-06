@@ -1,7 +1,7 @@
 from pathlib import Path
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
 from sqlalchemy.orm import Session
 from starlette.responses import FileResponse
 
@@ -9,6 +9,7 @@ from filebox import storage
 from filebox.core import queries
 from filebox.core.config import settings
 from filebox.core.database import Base, engine, get_db
+from filebox.rate_limiter import limiter
 from filebox.schemas.file import FileBaseResponse
 
 Base.metadata.create_all(bind=engine)
@@ -39,7 +40,10 @@ async def get_file(file_uuid: UUID, db: Session = Depends(get_db)):
 
 
 @router.post("/files/upload", status_code=201, response_model=FileBaseResponse)
-async def upload_file(file: UploadFile, db: Session = Depends(get_db)):
+@limiter.limit("100/minute")
+async def upload_file(
+    request: Request, file: UploadFile, db: Session = Depends(get_db)
+):
     """Upload file and save it on the files folder"""
 
     uuid = uuid4()
