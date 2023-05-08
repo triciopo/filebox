@@ -10,6 +10,16 @@ def test_root(client):
     assert response.json() == {"success": True}
 
 
+def test_get_file(client):
+    file_content = b"some file content"
+    files = {"file": ("file.txt", file_content)}
+    file_post = client.post("/api/v1/files/upload", files=files)
+    file_id = file_post.json()["uuid"]
+
+    response = client.get(f"/api/v1/files/{file_id}")
+    assert response.status_code
+
+
 def test_get_files(client):
     response = client.get("/api/v1/files")
     assert response.status_code == 200
@@ -41,7 +51,17 @@ def test_upload_filesize_limit(client):
     assert response.status_code == 413
 
 
-def test_download_random_id(client):
+def test_download_file(client):
+    file_content = b"some file content"
+    files = {"file": ("file.txt", file_content)}
+    file_id = client.post("/api/v1/files/upload", files=files).json()["uuid"]
+
+    response = client.get(f"/api/v1/files/{file_id}/download")
+
+    assert response.status_code == 200
+
+
+def test_download_not_found(client):
     id = uuid.uuid4()
     response = client.get(f"/api/v1/files/{id}/download")
 
@@ -58,3 +78,11 @@ def test_delete_file(client):
 
     assert response.status_code == 200
     assert response.json() == {"success": True, "message": "File deleted"}
+
+
+def test_delete_file_not_found(client):
+    id = uuid.uuid4()
+    response = client.delete(f"/api/v1/files/{id}")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": f"File {id} not found"}

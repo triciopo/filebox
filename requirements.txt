@@ -9,3 +9,5 @@ aiofiles
 aioshutil
 uvicorn
 slowapi
+passlib[bcrypt]
+python-jose

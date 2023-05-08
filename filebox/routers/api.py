@@ -52,9 +52,7 @@ async def upload_file(
     await storage.upload_file(uuid, file)
     size = await storage.get_file_size(file)
 
-    queries.create_file(db, uuid, file.filename, size, file.content_type)
-
-    return queries.get_file(db, uuid)
+    return queries.create_file(db, uuid, file.filename, size, file.content_type)
 
 
 @router.delete("/files/{file_uuid}", response_model=None)

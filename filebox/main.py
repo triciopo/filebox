@@ -11,6 +11,8 @@ from starlette.types import ASGIApp
 from filebox.core.config import settings
 from filebox.rate_limiter import limiter
 from filebox.routers.api import router
+from filebox.routers.login import login_router
+from filebox.routers.users import user_router
 
 
 class LimitUploadSize(BaseHTTPMiddleware):
@@ -51,3 +53,5 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.include_router(router, prefix=settings.API_PREFIX, tags=["files"])
+app.include_router(user_router, prefix=settings.API_PREFIX, tags=["users"])
+app.include_router(login_router, prefix=settings.API_PREFIX, tags=["login"])
