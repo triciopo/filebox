@@ -36,7 +36,6 @@ class LimitUploadSize(BaseHTTPMiddleware):
 
 app = FastAPI(
     title="filebox",
-    version="0.0.1",
 )
 
 app.add_middleware(

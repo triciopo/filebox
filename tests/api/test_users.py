@@ -40,14 +40,18 @@ def test_create_existing_user(client, test_user):
     assert response.json()["detail"] == "User already exists"
 
 
-def test_delete_user(client, test_user):
-    id = test_user["id"]
-    response = client.delete(f"/api/v1/users/{id}")
+def test_delete_user(client, test_super_user, super_access_token):
+    id = test_super_user.id
+    response = client.delete(
+        f"/api/v1/users/{id}", headers={"Authorization": f"Bearer {super_access_token}"}
+    )
     assert response.status_code == 200
     assert response.json() == {"success": True, "message": "User deleted"}
 
 
-def test_delete_user_not_found(client):
-    response = client.delete("/api/v1/users/1")
+def test_delete_user_not_found(client, super_access_token):
+    response = client.delete(
+        "/api/v1/users/1", headers={"Authorization": f"Bearer {super_access_token}"}
+    )
     assert response.status_code == 404
     assert response.json() == {"detail": "User not found"}

@@ -19,12 +19,20 @@ def get_files(db: Session, skip: int = 0, limit: int = 100):
     return db.query(File).offset(skip).limit(limit).all()
 
 
-def create_file(db: Session, uuid: UUID, name: str, size: str, content_type: str):
+def get_files_by_id(db: Session, id: int, skip: int = 0, limit: int = 100):
+    """Fetch all files from a user"""
+    return db.query(File).filter(File.owner_id == id).offset(skip).limit(limit).all()
+
+
+def create_file(
+    db: Session, uuid: UUID, name: str, size: str, owner_id: int, content_type: str
+):
     """Creates a file."""
     file = File(
         uuid=uuid,
         name=name,
         size=size,
+        owner_id=owner_id,
         content_type=content_type,
         created_at=date.today(),
     )
@@ -38,6 +46,14 @@ def delete_file(db: Session, uuid: UUID):
     """Deletes a file."""
     file = db.get(File, uuid)
     db.delete(file)
+    db.commit()
+
+
+def delete_all_files(db: Session, id: int, skip: int = 0, limit: int = 100):
+    """Deletes all files belonging to an ID."""
+    files = db.query(File).filter(File.owner_id == id).all()
+    for file in files:
+        db.delete(file)
     db.commit()
 
 

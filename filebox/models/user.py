@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import Column, Date, Integer, String
+from sqlalchemy import Boolean, Column, Date, Integer, String
 
 from filebox.core.database import Base
 
@@ -10,4 +10,5 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String)
     hashed_password = Column(String)
+    is_super_user = Column(Boolean, default=False)
     created_at = Column(Date(), default=date.today())

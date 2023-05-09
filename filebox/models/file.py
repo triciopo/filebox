@@ -11,5 +11,6 @@ class File(Base):
     uuid = Column(Uuid, primary_key=True, default=uuid.uuid4)
     name = Column(String)
     size = Column(Integer)
+    owner_id = Column(Integer)
     content_type = Column(String)
     created_at = Column(Date(), default=date.today())

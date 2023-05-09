@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from filebox.core import queries
+from filebox.core.auth import get_current_user
 from filebox.core.database import get_db
+from filebox.models.user import User
 from filebox.schemas.user import UserBaseResponse, UserCreate
 
 user_router = APIRouter()
@@ -29,8 +31,13 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
 
 
 @user_router.delete("/users/{user_id}")
-async def delete_user(user_id: int, db: Session = Depends(get_db)):
-    if not queries.get_user(db, user_id):
-        raise HTTPException(status_code=404, detail="User not found")
-    queries.delete_user(db, user_id)
-    return {"success": True, "message": "User deleted"}
+async def delete_user(
+    user_id: int, user: User = Depends(get_current_user), db: Session = Depends(get_db)
+):
+    if user.is_super_user:
+        if not queries.get_user(db, user_id):
+            raise HTTPException(status_code=404, detail="User not found")
+        queries.delete_user(db, user_id)
+        return {"success": True, "message": "User deleted"}
+
+    raise HTTPException(status_code=401, detail="Not authenticated.")

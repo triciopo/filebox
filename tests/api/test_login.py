@@ -17,17 +17,34 @@ def test_login_with_incorrect_credentials(client, test_user):
 
 
 def test_get_me_with_valid_token(client, access_token):
-    response = client.post(
-        "/api/v1/me",
-        headers={"Authorization": f"Bearer {access_token}"},
+    response = client.get(
+        "/api/v1/me", headers={"Authorization": f"Bearer {access_token}"}
     )
     assert response.status_code == 200
     assert response.json()["username"] == "test_user"
 
 
 def test_get_me_with_invalid_token(client):
-    response = client.post(
+    response = client.get(
         "/api/v1/me", headers={"Authorization": "Bearer invalid_token"}
     )
+    assert response.status_code == 401
+    assert response.json()["detail"] == "Could not validate credentials"
+
+
+def test_delete_account(client, access_token):
+    response = client.get(
+        "/api/v1/delete-account", headers={"Authorization": f"Bearer {access_token}"}
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"success": True, "message": "Account deleted."}
+
+
+def test_delete_account_invalid_token(client):
+    response = client.get(
+        "/api/v1/delete-account", headers={"Authorization": "Bearer invalid_token"}
+    )
+
     assert response.status_code == 401
     assert response.json()["detail"] == "Could not validate credentials"

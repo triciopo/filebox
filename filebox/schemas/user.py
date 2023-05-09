@@ -4,9 +4,7 @@ from pydantic import BaseModel
 
 
 class UserBase(BaseModel):
-    id: int
     username: str
-    created_at: datetime.date
 
 
 class UserCreate(UserBase):
@@ -14,6 +12,9 @@ class UserCreate(UserBase):
 
 
 class UserBaseResponse(UserBase):
+    id: int
+    created_at: datetime.date
+
     class Config:
         orm_mode = True
 
@@ -24,4 +25,6 @@ class UserInDBBase(UserBase):
 
 
 class UserInDB(UserInDBBase):
+    id: int
     hashed_password: str
+    is_super_user: bool = False

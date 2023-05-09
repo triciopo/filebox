@@ -8,6 +8,7 @@ class FileBase(BaseModel):
     uuid: UUID
     name: str
     size: int
+    owner_id: int
     content_type: str
     created_at: datetime.date
 
