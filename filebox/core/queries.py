@@ -67,6 +67,11 @@ def get_user_by_name(db: Session, username: str):
     return db.query(User).filter(User.username == username).first()
 
 
+def get_user_by_email(db: Session, email: str):
+    """Fetch a user by its email."""
+    return db.query(User).filter(User.email == email).first()
+
+
 def get_users(db: Session, skip: int = 0, limit: int = 100):
     """Fetch all users."""
     return db.query(User).offset(skip).limit(limit).all()
@@ -77,6 +82,7 @@ def create_user(db: Session, usr: UserCreate):
     user = User(
         username=usr.username,
         hashed_password=get_hashed_password(usr.password),
+        email=usr.email,
         created_at=date.today(),
     )
     db.add(user)

@@ -2,6 +2,7 @@ python-multipart
 fastapi
 SQLAlchemy
 pydantic[dotenv]
+pydantic[email]
 starlette
 httpx
 psycopg2

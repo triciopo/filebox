@@ -48,6 +48,7 @@ def test_user(client):
         "id": 1,
         "username": "test_user",
         "created_at": str(date.today()),
+        "email": "testemail@mail.com",
         "password": "test_password",
     }
     client.post("/api/v1/users/create", json=user_data)
@@ -72,6 +73,7 @@ def test_super_user(session):
         id="2",
         username="test_superuser",
         hashed_password=get_hashed_password("test_password"),
+        email="testemail@mail.com",
         is_super_user=True,
         created_at=date.today(),
     )

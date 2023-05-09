@@ -11,22 +11,34 @@ user_router = APIRouter()
 
 
 @user_router.get("/users", response_model=list[UserBaseResponse])
-async def get_users(db: Session = Depends(get_db)):
-    return queries.get_users(db)
+async def get_users(
+    user: User = Depends(get_current_user), db: Session = Depends(get_db)
+):
+    if user.is_super_user:
+        return queries.get_users(db)
+    raise HTTPException(status_code=401, detail="Not authenticated")
 
 
 @user_router.get("/users/{user_id}", response_model=UserBaseResponse)
-async def get_user(user_id: int, db: Session = Depends(get_db)):
+async def get_user(
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
     user = queries.get_user(db, user_id)
     if not user:
         raise HTTPException(404, detail=f"User {user_id} not found")
-    return user
+    if user_id == current_user.id or current_user.is_super_user:
+        return user
+    raise HTTPException(404, detail=f"User {user_id} not found")
 
 
 @user_router.post("/users/create", status_code=201, response_model=UserBaseResponse)
 async def create_user(user: UserCreate, db: Session = Depends(get_db)):
     if queries.get_user_by_name(db, user.username):
         raise HTTPException(status_code=400, detail="User already exists")
+    if queries.get_user_by_email(db, user.email):
+        raise HTTPException(status_code=400, detail="Email already in use")
     return queries.create_user(db, user)
 
 
@@ -40,4 +52,4 @@ async def delete_user(
         queries.delete_user(db, user_id)
         return {"success": True, "message": "User deleted"}
 
-    raise HTTPException(status_code=401, detail="Not authenticated.")
+    raise HTTPException(status_code=401, detail="Not authenticated")
