@@ -10,9 +10,6 @@ environ["STORAGE_DIR"] = "tests/test-files/"
 environ["SIZE_LIMIT"] = "20971520"
 environ["ENV"] = "tests"
 
-from filebox.core.database import Base, get_db
-from filebox.main import app
-
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -20,6 +17,8 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 @pytest.fixture(name="session")
 def session():
+    from filebox.core.database import Base
+
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
@@ -32,6 +31,9 @@ def session():
 
 @pytest.fixture()
 def client(session):
+    from filebox.core.database import get_db
+    from filebox.main import app
+
     def override_get_db():
         try:
             yield session

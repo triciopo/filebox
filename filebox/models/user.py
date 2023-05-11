@@ -1,5 +1,4 @@
 from datetime import date
-from pydantic import EmailStr
 
 from sqlalchemy import Boolean, Column, Date, Integer, String
 
