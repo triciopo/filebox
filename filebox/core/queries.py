@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from filebox.core.auth import get_hashed_password
 from filebox.models.file import File
 from filebox.models.user import User
-from filebox.schemas.user import UserCreate
+from filebox.schemas.user import UserCreate, UserUpdate
 
 
 def get_file(db: Session, uuid: UUID):
@@ -86,6 +86,20 @@ def create_user(db: Session, usr: UserCreate):
         created_at=date.today(),
     )
     db.add(user)
+    db.commit()
+
+    return user
+
+
+def update_user(db: Session, id: int, usr: UserUpdate):
+    """Updates a user."""
+    user = db.get(User, id)
+    if usr.username:
+        user.username = usr.username
+    if usr.password:
+        user.hashed_password = get_hashed_password(usr.password)
+    if usr.email:
+        user.email = usr.email
     db.commit()
 
     return user

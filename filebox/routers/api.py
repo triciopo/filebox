@@ -20,15 +20,13 @@ router = APIRouter()
 
 
 @router.get("/")
-async def root():
+def root():
     """Main path"""
     return {"success": True}
 
 
 @router.get("/files", response_model=list[FileBaseResponse])
-async def get_files(
-    user: User = Depends(get_current_user), db: Session = Depends(get_db)
-):
+def get_files(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """Fetch all files"""
     if user.is_super_user:
         return queries.get_files(db)
@@ -36,7 +34,7 @@ async def get_files(
 
 
 @router.get("/files/{file_uuid}", response_model=FileBaseResponse)
-async def get_file(
+def get_file(
     file_uuid: UUID,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),

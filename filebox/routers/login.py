@@ -17,7 +17,7 @@ login_router = APIRouter()
 
 
 @login_router.post("/token", response_model=Token)
-async def login_for_access_token(
+def login_for_access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Session = Depends(get_db),
 ):
@@ -36,12 +36,12 @@ async def login_for_access_token(
 
 
 @login_router.get("/me", response_model=UserBaseResponse)
-async def get_me(user: User = Depends(get_current_user)):
+def get_me(user: User = Depends(get_current_user)):
     return user
 
 
 @login_router.get("/delete-account")
-async def delete_account(
+def delete_account(
     user: User = Depends(get_current_user), db: Session = Depends(get_db)
 ):
     queries.delete_user(db, user.id)
