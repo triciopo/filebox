@@ -62,6 +62,41 @@ def test_create_existing_user(client, test_user):
     assert response.json()["detail"] == "User already exists"
 
 
+def test_update_user(client, test_user, access_token):
+    data = {"username": "mod_user", "email": "mod_email@mail.com", "password": "test"}
+    response = client.put(
+        f"/api/v1/users/{test_user['id']}",
+        headers={"Authorization": f"Bearer {access_token}"},
+        json=data,
+    )
+    assert response.status_code == 200
+    assert response.json()["id"] == test_user["id"]
+    assert response.json()["username"] == "mod_user"
+    assert response.json()["email"] == "mod_email@mail.com"
+
+
+def test_update_user_not_authenticated(client, access_token, test_super_user):
+    data = {"username": "mod_user", "email": "mod_email@mail.com", "password": "test"}
+    response = client.put(
+        f"/api/v1/users/{test_super_user.id}",
+        headers={"Authorization": f"Bearer {access_token}"},
+        json=data,
+    )
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Not authenticated"}
+
+
+def test_update_user_not_found(client, super_access_token):
+    data = {"username": "mod_user", "email": "mod_email@mail.com", "password": "test"}
+    response = client.put(
+        "/api/v1/users/5",
+        headers={"Authorization": f"Bearer {super_access_token}"},
+        json=data,
+    )
+    assert response.status_code == 404
+    assert response.json() == {"detail": "User 5 not found"}
+
+
 def test_delete_user(client, test_super_user, super_access_token):
     id = test_super_user.id
     response = client.delete(
