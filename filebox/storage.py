@@ -1,3 +1,4 @@
+import asyncio
 from pathlib import Path
 from uuid import UUID
 
@@ -20,7 +21,7 @@ async def upload_file(uuid: UUID, file: UploadFile):
                 if file_size >= settings.SIZE_LIMIT:
                     raise HTTPException(status_code=413)
                 await f.write(chunk)
-    except IOError:
+    except OSError:
         raise HTTPException(status_code=500)
 
 
@@ -41,6 +42,9 @@ async def get_file_size(file: UploadFile):
 
 
 async def delete_file(uuid: UUID):
-    # await aiofiles.os.remove(f"{STORAGE_DIR}{uuid}/{uuid}")
-    # await aiofiles.os.rmdir(f"{STORAGE_DIR}{uuid}")
     await aioshutil.rmtree(f"{STORAGE_DIR}{uuid}")
+
+
+async def delete_files(files: list[UUID]):
+    delete_tasks = [delete_file(file) for file in files]
+    await asyncio.gather(*delete_tasks)
