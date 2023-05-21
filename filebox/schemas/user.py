@@ -8,33 +8,35 @@ class UserBase(BaseModel):
     username: str
     email: EmailStr
 
-    @validator("username")
-    def username_required(cls, v):
-        if not v:
-            raise ValueError("Username is required")
-        return v
+    def username_validator(cls, name):
+        if not name.isalnum():
+            raise ValueError("Username must be alphanumeric")
+        if len(name) < 3:
+            raise ValueError("Username must be at least 3 characters")
+        if len(name) > 20:
+            raise ValueError("Username must be between 3 and 20 characters")
+
+        return name
 
 
 class UserCreate(UserBase):
     password: str
 
     @validator("password")
-    def pass_required(cls, v):
-        if not v:
+    def pass_required(cls, password):
+        if not password:
             raise ValueError("Password is required")
-        return v
+        return password
 
 
 class UserUpdate(UserBase):
-    username: Optional[str]
-    email: Optional[EmailStr]
     password: Optional[str]
 
     @validator("password")
-    def pass_required(cls, v):
-        if not v:
+    def pass_required(cls, password):
+        if not password:
             raise ValueError("Password is required")
-        return v
+        return password
 
 
 class UserBaseResponse(UserBase):

@@ -5,11 +5,11 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from sqlalchemy.orm import Session
 
 from filebox.core import queries
 from filebox.core.config import settings
-from filebox.core.database import get_db
+from filebox.core.database import DBSession
+from filebox.models.user import User
 from filebox.schemas.token import TokenData
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -17,8 +17,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_PREFIX}/token")
 
 
 def create_access_token(
-    data: dict, expires_delta: Union[datetime.timedelta, None] = None
-):
+    data: dict,
+    expires_delta: Union[datetime.timedelta, None] = None,
+) -> str:
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.datetime.utcnow() + expires_delta
@@ -32,8 +33,9 @@ def create_access_token(
 
 
 async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)], db: Session = Depends(get_db)
-):
+    token: Annotated[str, Depends(oauth2_scheme)],
+    db: DBSession,
+) -> User:
     credentials_exception = HTTPException(
         status_code=401,
         detail="Could not validate credentials",
@@ -43,19 +45,26 @@ async def get_current_user(
         payload = jwt.decode(
             token, settings.API_SECRET_KEY, algorithms=[settings.API_ALGORITHM]
         )
-        username: str = payload.get("sub")
+        username: str = str(payload.get("sub"))
         if username is None:
             raise credentials_exception
         token_data = TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    user = queries.get_user_by_name(db, username=token_data.username)
+    user = queries.get_user_by_name(db, username=str(token_data.username))
     if user is None:
         raise credentials_exception
     return user
 
 
-def authenticate_user(username: str, password: str, db: Session = Depends(get_db)):
+CurrentUser = Annotated[User, Depends(get_current_user)]
+
+
+def authenticate_user(
+    username: str,
+    password: str,
+    db: DBSession,
+):
     user = queries.get_user_by_name(db, username)
     if not user:
         return False

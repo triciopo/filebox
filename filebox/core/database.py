@@ -1,10 +1,13 @@
+from typing import Annotated, Generator
+
+from fastapi import Depends
 from sqlalchemy import create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 from filebox.core.config import settings
 
 
-def get_db_url(env):
+def get_db_url(env) -> str:
     if env == "tests":
         return "sqlite:///./test.db"
     return f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_SERVER}/{settings.POSTGRES_DB}"
@@ -15,7 +18,7 @@ engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-def get_db():
+def get_db() -> Generator:
     db = SessionLocal()
     try:
         yield db
@@ -23,4 +26,7 @@ def get_db():
         db.close()
 
 
+DBSession = Annotated[Session, Depends(get_db)]
+
 Base = declarative_base()
+Base.metadata.create_all(bind=engine)
