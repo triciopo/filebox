@@ -25,7 +25,7 @@ def get_files_by_id(db: Session, id: int, skip: int = 0, limit: int = 100):
 
 
 def create_file(
-    db: Session, uuid: UUID, name: str, size: str, owner_id: int, content_type: str
+    db: Session, uuid: UUID, name: str, size: int, owner_id: int, content_type: str
 ):
     """Creates a file."""
     file = File(
@@ -93,7 +93,7 @@ def create_user(db: Session, usr: UserCreate):
 
 def update_user(db: Session, id: int, usr: UserUpdate):
     """Updates a user."""
-    user = db.get(User, id)
+    user = get_user(db, id)
     if usr.username:
         user.username = usr.username
     if usr.password:

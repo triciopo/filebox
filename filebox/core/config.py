@@ -1,13 +1,14 @@
 import secrets
+from typing import Optional
 
 from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
-    POSTGRES_SERVER: str = None
-    POSTGRES_USER: str = None
-    POSTGRES_PASSWORD: str = None
-    POSTGRES_DB: str = None
+    POSTGRES_SERVER: Optional[str] = None
+    POSTGRES_USER: Optional[str] = None
+    POSTGRES_PASSWORD: Optional[str] = None
+    POSTGRES_DB: Optional[str] = None
 
     STORAGE_DIR: str = "uploads/"
     SIZE_LIMIT: int = 104857600
