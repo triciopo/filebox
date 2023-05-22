@@ -8,6 +8,7 @@ class UserBase(BaseModel):
     username: str
     email: EmailStr
 
+    @validator("username")
     def username_validator(cls, name):
         if not name.isalnum():
             raise ValueError("Username must be alphanumeric")
@@ -41,6 +42,8 @@ class UserUpdate(UserBase):
 
 class UserBaseResponse(UserBase):
     id: int
+    storage_space: int
+    used_space: int
     created_at: datetime.date
 
     class Config:

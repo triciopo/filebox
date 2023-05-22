@@ -1,6 +1,7 @@
 from datetime import date
 from uuid import UUID
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from filebox.core.auth import get_hashed_password
@@ -28,6 +29,9 @@ def create_file(
     db: Session, uuid: UUID, name: str, size: int, owner_id: int, content_type: str
 ):
     """Creates a file."""
+    user = get_user(db, owner_id)
+    user.used_space += size
+
     file = File(
         uuid=uuid,
         name=name,
@@ -75,6 +79,16 @@ def get_user_by_email(db: Session, email: str):
 def get_users(db: Session, skip: int = 0, limit: int = 100):
     """Fetch all users."""
     return db.query(User).offset(skip).limit(limit).all()
+
+
+def get_user_used_space(db: Session, id: int):
+    """Fetch the used storage space of a user"""
+    return (
+        db.query(File)
+        .filter(File.owner_id == id)
+        .with_entities(func.coalesce(func.sum(File.size), 0))
+        .scalar()
+    )
 
 
 def create_user(db: Session, usr: UserCreate):

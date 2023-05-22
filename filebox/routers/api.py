@@ -8,11 +8,12 @@ from filebox import storage
 from filebox.core import queries
 from filebox.core.auth import CurrentUser
 from filebox.core.config import settings
-from filebox.core.database import DBSession
+from filebox.core.database import Base, DBSession, engine
 from filebox.rate_limiter import limiter
 from filebox.schemas.file import FileBaseResponse
 
 file_router = APIRouter()
+Base.metadata.create_all(bind=engine)
 
 
 @file_router.get("/")
@@ -58,8 +59,12 @@ async def upload_file(
     uuid = uuid4()
     Path(f"{settings.STORAGE_DIR}{uuid}").mkdir(parents=True, exist_ok=True)
 
-    await storage.upload_file(uuid, file)
     size = await storage.get_file_size(file)
+    current_user_used_space = queries.get_user_used_space(db, int(current_user.id))
+    if current_user_used_space + size > current_user.storage_space:
+        raise HTTPException(status_code=413, detail="Storage space limit exceeded")
+
+    await storage.upload_file(uuid, file)
 
     return queries.create_file(
         db, uuid, str(file.filename), size, int(current_user.id), content_type

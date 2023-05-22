@@ -48,7 +48,7 @@ def client(session):
 def test_user(client):
     user_data = {
         "id": 1,
-        "username": "test_user",
+        "username": "testuser",
         "created_at": str(date.today()),
         "email": "testemail@mail.com",
         "password": "test_password",
@@ -73,7 +73,7 @@ def test_super_user(session):
 
     user = User(
         id="2",
-        username="test_superuser",
+        username="testsuperuser",
         hashed_password=get_hashed_password("test_password"),
         email="testemail@mail.com",
         is_super_user=True,

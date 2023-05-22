@@ -21,7 +21,7 @@ def test_get_me_with_valid_token(client, access_token):
         "/api/v1/users/me", headers={"Authorization": f"Bearer {access_token}"}
     )
     assert response.status_code == 200
-    assert response.json()["username"] == "test_user"
+    assert response.json()["username"] == "testuser"
 
 
 def test_get_me_with_invalid_token(client):
@@ -60,7 +60,7 @@ def test_get_user_not_found(client, super_access_token):
 def test_create_user(client):
     user_data = {
         "id": "1",
-        "username": "new_user",
+        "username": "newuser",
         "created_at": str(date.today()),
         "email": "new_email@mail.com",
         "password": "test",
@@ -68,7 +68,7 @@ def test_create_user(client):
     response = client.post("/api/v1/users/create", json=user_data)
 
     assert response.status_code == 201
-    assert response.json()["username"] == "new_user"
+    assert response.json()["username"] == "newuser"
     assert response.json()["created_at"] == str(date.today())
 
 
@@ -79,7 +79,7 @@ def test_create_existing_user(client, test_user):
 
 
 def test_update_user(client, test_user, access_token):
-    data = {"username": "mod_user", "email": "mod_email@mail.com", "password": "test"}
+    data = {"username": "moduser", "email": "mod_email@mail.com", "password": "test"}
     response = client.put(
         f"/api/v1/users/{test_user['id']}",
         headers={"Authorization": f"Bearer {access_token}"},
@@ -87,12 +87,12 @@ def test_update_user(client, test_user, access_token):
     )
     assert response.status_code == 200
     assert response.json()["id"] == test_user["id"]
-    assert response.json()["username"] == "mod_user"
+    assert response.json()["username"] == "moduser"
     assert response.json()["email"] == "mod_email@mail.com"
 
 
 def test_update_user_not_authenticated(client, access_token, test_super_user):
-    data = {"username": "mod_user", "email": "mod_email@mail.com", "password": "test"}
+    data = {"username": "moduser", "email": "mod_email@mail.com", "password": "test"}
     response = client.put(
         f"/api/v1/users/{test_super_user.id}",
         headers={"Authorization": f"Bearer {access_token}"},
@@ -103,7 +103,7 @@ def test_update_user_not_authenticated(client, access_token, test_super_user):
 
 
 def test_update_user_not_found(client, super_access_token):
-    data = {"username": "mod_user", "email": "mod_email@mail.com", "password": "test"}
+    data = {"username": "moduser", "email": "mod_email@mail.com", "password": "test"}
     response = client.put(
         "/api/v1/users/5",
         headers={"Authorization": f"Bearer {super_access_token}"},
