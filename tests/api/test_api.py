@@ -45,16 +45,37 @@ def test_get_random(client, access_token):
 
 def test_upload_file(client, access_token):
     file_content = b"some file content"
-    files = {"file": ("file.txt", file_content)}
+    file = {"file": ("file.txt", file_content)}
     response = client.post(
         "/api/v1/files/upload",
-        files=files,
+        files=file,
         headers={"Authorization": f"Bearer {access_token}"},
     )
     file_id = response.json()["uuid"]
 
     assert response.status_code == 201
     assert f"{file_id}.txt" in os.listdir(f"{settings.STORAGE_DIR}{file_id}")
+
+
+def test_upload_batch_file(client, access_token):
+    file_content = b"some file content"
+    files = [
+        ("files", ("file.txt", file_content)),
+        ("files", ("file2.txt", file_content)),
+    ]
+    response = client.post(
+        "/api/v1/files/upload-batch",
+        files=files,
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    response_json = response.json()
+    print(response_json)
+    uuid = [file["uuid"] for file in response_json]
+
+    assert response.status_code == 201
+    assert len(uuid) == 2
+    assert f"{uuid[0]}.txt" in os.listdir(f"{settings.STORAGE_DIR}{uuid[0]}")
+    assert f"{uuid[1]}.txt" in os.listdir(f"{settings.STORAGE_DIR}{uuid[1]}")
 
 
 def test_upload_filesize_limit(client, access_token):

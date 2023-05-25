@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional
 from uuid import UUID
 
-import aiofiles
+import aiofiles.os
 import aioshutil
 from fastapi import HTTPException, UploadFile
 
@@ -14,17 +14,20 @@ STORAGE_DIR = settings.STORAGE_DIR
 
 async def upload_file(uuid: UUID, file: UploadFile) -> None:
     """Upload a file to the storage"""
-    file_size = 0
     file_path = f"{STORAGE_DIR}{uuid}/{uuid}{Path(str(file.filename)).suffix}"
+    Path(f"{STORAGE_DIR}{uuid}").mkdir(parents=True, exist_ok=True)
     try:
         async with aiofiles.open(file_path, "wb") as f:
             while chunk := await file.read(10485760):  # 10MB
-                file_size += len(chunk)
-                if file_size >= settings.SIZE_LIMIT:
-                    raise HTTPException(status_code=413)
                 await f.write(chunk)
     except OSError:
         raise HTTPException(status_code=500)
+
+
+async def upload_files(uuids: list[UUID], files: list[UploadFile]) -> None:
+    """Upload a list of files concurrently"""
+    upload_tasks = [upload_file(uuid, file) for uuid, file in zip(uuids, files)]
+    await asyncio.gather(*upload_tasks)
 
 
 async def get_file(uuid: UUID) -> Optional[Path]:
@@ -43,6 +46,13 @@ async def get_file_size(file: UploadFile) -> int:
     await file.seek(0)
 
     return file_size
+
+
+async def get_files_size(files: list[UploadFile]) -> list[int]:
+    tasks = [get_file_size(file) for file in files]
+    sizes = await asyncio.gather(*tasks)
+
+    return sizes
 
 
 async def delete_file(uuid: UUID) -> None:

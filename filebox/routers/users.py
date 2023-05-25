@@ -13,11 +13,13 @@ user_router = APIRouter()
 def get_users(
     current_user: CurrentUser,
     db: DBSession,
+    skip: int = 0,
+    limit: int = 100,
 ) -> list[UserBaseResponse]:
     """Returns a list of all users"""
     if not current_user.is_super_user:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    return queries.get_users(db)
+    return queries.get_users(db, skip=skip, limit=limit)
 
 
 @user_router.get("/users/me", response_model=UserBaseResponse)
@@ -83,7 +85,6 @@ async def delete_user(
     files = queries.get_files_by_id(db, user_id)
     files_uuid = [file.uuid for file in files]
     await storage.delete_files(files_uuid)
-    queries.delete_all_files(db, user_id)
     queries.delete_user(db, user_id)
 
     return {"success": True, "message": "User deleted"}

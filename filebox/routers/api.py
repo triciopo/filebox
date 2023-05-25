@@ -1,4 +1,3 @@
-from pathlib import Path
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
@@ -23,11 +22,21 @@ def root() -> dict:
 
 
 @file_router.get("/files", response_model=list[FileBaseResponse])
-def get_files(current_user: CurrentUser, db: DBSession) -> list[FileBaseResponse]:
+def get_files(
+    current_user: CurrentUser,
+    db: DBSession,
+    skip: int = 0,
+    limit: int = 100,
+) -> list[FileBaseResponse]:
     """Fetch all files"""
     if current_user.is_super_user:
-        return queries.get_files(db)
-    return queries.get_files_by_id(db, int(current_user.id))
+        return queries.get_files(db, skip=skip, limit=limit)
+    return queries.get_files_by_id(
+        db,
+        int(current_user.id),
+        skip=skip,
+        limit=limit,
+    )
 
 
 @file_router.get("/files/{file_uuid}", response_model=FileBaseResponse)
@@ -55,20 +64,55 @@ async def upload_file(
 ) -> FileBaseResponse:
     """Upload a file"""
     content_type = file.content_type or "application/octet-stream"
-
     uuid = uuid4()
-    Path(f"{settings.STORAGE_DIR}{uuid}").mkdir(parents=True, exist_ok=True)
 
     size = await storage.get_file_size(file)
     current_user_used_space = queries.get_user_used_space(db, int(current_user.id))
+    if size > settings.SIZE_LIMIT:
+        raise HTTPException(status_code=413, detail="File size limit exceeded")
     if current_user_used_space + size > current_user.storage_space:
         raise HTTPException(status_code=413, detail="Storage space limit exceeded")
 
     await storage.upload_file(uuid, file)
-
     return queries.create_file(
         db, uuid, str(file.filename), size, int(current_user.id), content_type
     )
+
+
+@file_router.post(
+    "/files/upload-batch", status_code=201, response_model=list[FileBaseResponse]
+)
+@limiter.limit("10/minute")
+async def upload_batch(
+    request: Request,
+    current_user: CurrentUser,
+    db: DBSession,
+    files: list[UploadFile] = File(...),
+) -> list[FileBaseResponse]:
+    """Upload a batch of files"""
+    current_user_used_space = queries.get_user_used_space(db, int(current_user.id))
+    size = await storage.get_files_size(files)
+    if current_user_used_space + sum(size) > current_user.storage_space:
+        raise HTTPException(status_code=413, detail="Storage space limit exceeded")
+    if sum(size) > settings.SIZE_LIMIT:
+        raise HTTPException(status_code=413, detail="File size limit exceeded")
+    uuids = [uuid4() for _ in range(len(files))]
+    uploaded_files = []
+
+    for i, file in enumerate(files):
+        content_type = file.content_type or "application/octet-stream"
+        uploaded_files.append(
+            queries.create_file(
+                db,
+                uuids[i],
+                str(file.filename),
+                size[i],
+                int(current_user.id),
+                content_type,
+            )
+        )
+    await storage.upload_files(uuids, files)
+    return uploaded_files
 
 
 @file_router.delete("/files/{file_uuid}", response_model=None)

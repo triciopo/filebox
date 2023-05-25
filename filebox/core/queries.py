@@ -48,16 +48,10 @@ def create_file(
 
 def delete_file(db: Session, uuid: UUID):
     """Deletes a file."""
-    file = db.get(File, uuid)
+    file = get_file(db, uuid)
+    user = get_user(db, file.owner_id)
+    user.used_space -= file.size
     db.delete(file)
-    db.commit()
-
-
-def delete_all_files(db: Session, id: int, skip: int = 0, limit: int = 100):
-    """Deletes all files belonging to an ID."""
-    files = db.query(File).filter(File.owner_id == id).all()
-    for file in files:
-        db.delete(file)
     db.commit()
 
 
