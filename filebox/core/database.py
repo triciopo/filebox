@@ -29,3 +29,7 @@ def get_db() -> Generator:
 DBSession = Annotated[Session, Depends(get_db)]
 
 Base = declarative_base()
+
+
+def create_tables():
+    Base.metadata.create_all(bind=engine)

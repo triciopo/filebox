@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from filebox.core.auth import get_hashed_password
 from filebox.models.file import File
+from filebox.models.folder import Folder
 from filebox.models.user import User
 from filebox.schemas.user import UserCreate, UserUpdate
 
@@ -26,7 +27,14 @@ def get_files_by_id(db: Session, id: int, skip: int = 0, limit: int = 100):
 
 
 def create_file(
-    db: Session, uuid: UUID, name: str, size: int, owner_id: int, content_type: str
+    db: Session,
+    uuid: UUID,
+    name: str,
+    path: str,
+    folder_id: int,
+    size: int,
+    owner_id: int,
+    content_type: str,
 ):
     """Creates a file."""
     user = get_user(db, owner_id)
@@ -35,6 +43,8 @@ def create_file(
     file = File(
         uuid=uuid,
         name=name,
+        path=path,
+        folder_id=folder_id,
         size=size,
         owner_id=owner_id,
         content_type=content_type,
@@ -117,4 +127,80 @@ def delete_user(db: Session, id: int):
     """Deletes a user."""
     user = db.get(User, id)
     db.delete(user)
+    db.commit()
+
+
+def get_folders_by_user_id(db: Session, user_id: int, skip: int = 0, limit: int = 100):
+    """Fetch all folders of a user"""
+    return (
+        db.query(Folder)
+        .filter(Folder.owner_id == user_id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+
+def get_subfolders_by_id(db: Session, folder_id: int, skip: int = 0, limit: int = 100):
+    """Fetch all subfolders of a folder"""
+    return (
+        db.query(Folder)
+        .filter(Folder.parent_id == folder_id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+
+def get_files_by_folder_id(
+    db: Session, folder_id: int, skip: int = 0, limit: int = 100
+):
+    """Fetch all files of a folder"""
+    return (
+        db.query(File)
+        .filter(File.folder_id == folder_id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+
+def get_file_by_path(db: Session, path: str, user_id):
+    """Fetch a file by its path."""
+    return (
+        db.query(File)
+        .filter(File.owner_id == user_id)
+        .filter(File.path == path)
+        .first()
+    )
+
+
+def get_folder_by_path(db: Session, path: str, user_id: int):
+    """Fetch a folder by its path."""
+    return (
+        db.query(Folder)
+        .filter(Folder.owner_id == user_id)
+        .filter(Folder.path == path)
+        .first()
+    )
+
+
+def create_folder(db: Session, path: str, owner_id: int, parent_id: int):
+    """Creates a folder."""
+    folder = Folder(
+        path=path,
+        owner_id=owner_id,
+        parent_id=parent_id,
+        created_at=date.today(),
+    )
+    db.add(folder)
+    db.commit()
+
+    return folder
+
+
+def delete_folder(db: Session, path: str, user_id: int):
+    """Deletes a folder."""
+    folder = get_folder_by_path(db, path, user_id)
+    db.delete(folder)
     db.commit()

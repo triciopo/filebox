@@ -9,9 +9,11 @@ from starlette.responses import Response
 from starlette.types import ASGIApp
 
 from filebox.core.config import settings
+from filebox.core.database import create_tables
 from filebox.rate_limiter import limiter
 from filebox.routers.api import file_router
 from filebox.routers.auth import auth_router
+from filebox.routers.folders import folder_router
 from filebox.routers.users import user_router
 
 
@@ -42,6 +44,8 @@ app = FastAPI(
     title="filebox",
 )
 
+create_tables()
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -56,5 +60,6 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.include_router(file_router, prefix=settings.API_PREFIX, tags=["files"])
+app.include_router(folder_router, prefix=settings.API_PREFIX, tags=["folders"])
 app.include_router(user_router, prefix=settings.API_PREFIX, tags=["users"])
 app.include_router(auth_router, prefix=settings.API_PREFIX, tags=["auth"])
