@@ -53,7 +53,7 @@ def test_user(client):
         "email": "testemail@mail.com",
         "password": "test_password",
     }
-    client.post("/api/v1/users/create", json=user_data)
+    client.post("/api/v1/users", json=user_data)
     return user_data
 
 

@@ -43,14 +43,16 @@ def get_user(
     return user
 
 
-@user_router.post("/users/create", status_code=201, response_model=UserBaseResponse)
+@user_router.post("/users", status_code=201, response_model=UserBaseResponse)
 def create_user(user_in: UserCreate, db: DBSession) -> UserBaseResponse:
     """Create a new user"""
     if queries.get_user_by_name(db, user_in.username):
         raise HTTPException(status_code=400, detail="User already exists")
     if queries.get_user_by_email(db, user_in.email):
         raise HTTPException(status_code=400, detail="Email already in use")
-    return queries.create_user(db, user_in)
+    user = queries.create_user(db, user_in)
+    queries.create_folder(db, "/", user.id, None)
+    return user
 
 
 @user_router.put("/users/{user_id}", response_model=UserBaseResponse)

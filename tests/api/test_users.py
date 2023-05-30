@@ -65,7 +65,7 @@ def test_create_user(client):
         "email": "new_email@mail.com",
         "password": "test",
     }
-    response = client.post("/api/v1/users/create", json=user_data)
+    response = client.post("/api/v1/users", json=user_data)
 
     assert response.status_code == 201
     assert response.json()["username"] == "newuser"
@@ -73,7 +73,7 @@ def test_create_user(client):
 
 
 def test_create_existing_user(client, test_user):
-    response = client.post("/api/v1/users/create", json=test_user)
+    response = client.post("/api/v1/users", json=test_user)
     assert response.status_code == 400
     assert response.json()["detail"] == "User already exists"
 
