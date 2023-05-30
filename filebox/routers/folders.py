@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException
 
+from filebox import storage
 from filebox.core import queries
 from filebox.core.auth import CurrentUser
 from filebox.core.database import DBSession
 from filebox.schemas.folder import FolderBaseResponse, FolderCreate, FolderPath
-from filebox import storage
 
 folder_router = APIRouter()
 

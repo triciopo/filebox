@@ -1,8 +1,6 @@
-import re
 from uuid import uuid4
 
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
-from pydantic import parse_obj_as
 from starlette.responses import FileResponse
 
 from filebox import storage
