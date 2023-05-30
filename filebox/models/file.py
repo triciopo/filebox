@@ -16,5 +16,5 @@ class File(Base):
     owner_id = Column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
-    content_type = Column(String)
+    mime_type = Column(String)
     created_at = Column(Date(), default=date.today())

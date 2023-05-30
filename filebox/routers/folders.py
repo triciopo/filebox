@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import constr
 
 from filebox.core import queries
 from filebox.core.auth import CurrentUser
 from filebox.core.database import DBSession
-from filebox.schemas.folder import FolderBaseResponse, FolderCreate
+from filebox.schemas.folder import FolderBaseResponse, FolderCreate, FolderPath
+from filebox import storage
 
 folder_router = APIRouter()
 
@@ -27,7 +27,7 @@ def get_folders(
 
 @folder_router.get("/folders{folder_path:path}", response_model=None)
 def get_folder(
-    folder_path: constr(regex="^(?:\/(?:[\w\s]+\/)*[\w\s]+|\/)$"),  # TODO
+    folder_path: FolderPath,
     current_user: CurrentUser,
     db: DBSession,
 ) -> dict:
@@ -50,36 +50,20 @@ def create_folder(
 ) -> FolderBaseResponse:
     """Create a new folder"""
     if queries.get_folder_by_path(db, folder.path, int(current_user.id)):
-        raise HTTPException(status_code=400, detail="Path already exists")
+        raise HTTPException(status_code=409, detail="Folder already exists")
 
-    # Remove spaces between slashes
-    words = folder.path.split("/")
-    cleaned_path = "/".join(word.strip() for word in words)
-    # Split the path into individual directories
+    # Remove spaces between slashes and split the path into individual directories
+    cleaned_path = "/".join(word.strip() for word in folder.path.split("/"))
     directories = cleaned_path.split("/")
     parent_id = queries.get_folder_by_path(db, "/", int(current_user.id)).id
 
-    # Create parent folders
-    for directory in directories:
-        parent_path = "/".join(directories[: directories.index(directory)])
-        if parent_path:
-            parent_path_folder = queries.get_folder_by_path(
-                db, parent_path, int(current_user.id)
-            )
-            if not parent_path_folder:
-                new_folder = queries.create_folder(
-                    db, parent_path, int(current_user.id), parent_id
-                )
-                parent_id = new_folder.id
-            else:
-                parent_id = parent_path_folder.id
-
-    return queries.create_folder(db, cleaned_path, int(current_user.id), parent_id)
+    id = queries.create_parent_folders(db, directories, int(current_user.id), parent_id)
+    return queries.create_folder(db, cleaned_path, int(current_user.id), id)
 
 
 @folder_router.delete("/folders{folder_path:path}", response_model=None)
-def delete_folder(
-    folder_path: constr(regex="^\/(?:[\w\s]+\/)*[\w\s]+$"),
+async def delete_folder(
+    folder_path: FolderPath,
     current_user: CurrentUser,
     db: DBSession,
 ) -> dict:
@@ -87,6 +71,11 @@ def delete_folder(
     folder = queries.get_folder_by_path(db, folder_path, int(current_user.id))
     if not folder:
         raise HTTPException(status_code=404, detail="Folder not found")
+    if folder.path == "/":
+        raise HTTPException(status_code=404, detail="Cannot delete root folder")
+    files = queries.get_files_by_folder_recursive(db, folder.id)
+    files_to_delete = [file.uuid for file in files] if files else []
 
     queries.delete_folder(db, folder_path, int(current_user.id))
+    await storage.delete_files(files_to_delete)
     return {"success": True, "message": "Folder deleted"}

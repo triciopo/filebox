@@ -49,6 +49,7 @@ async def get_file_size(file: UploadFile) -> int:
 
 
 async def get_files_size(files: list[UploadFile]) -> list[int]:
+    """Get the size of a list of files in bytes"""
     tasks = [get_file_size(file) for file in files]
     sizes = await asyncio.gather(*tasks)
 
@@ -57,7 +58,10 @@ async def get_files_size(files: list[UploadFile]) -> list[int]:
 
 async def delete_file(uuid: UUID) -> None:
     """Deletes a file with the specified UUID"""
-    await aioshutil.rmtree(f"{STORAGE_DIR}{uuid}")
+    try:
+        await aioshutil.rmtree(f"{STORAGE_DIR}{uuid}")
+    except OSError:
+        pass
 
 
 async def delete_files(files: list[UUID]) -> None:

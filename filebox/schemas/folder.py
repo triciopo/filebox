@@ -1,16 +1,17 @@
 import datetime
-from typing import Annotated
+from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConstrainedStr
 
-path_regex = Annotated[
-    str,
-    Field(regex="^(?:\/(?:[\w\s]+\/)*[\w\s]+|\/)$", min_length=1, max_length=96),
-]
+
+class FolderPath(ConstrainedStr):
+    regex = "^(?:\/(?:[\w\s]+\/)*[\w\s]+|\/)$"
+    min_length = 1
+    max_length = 96
 
 
 class FolderBase(BaseModel):
-    path: path_regex
+    path: FolderPath
 
 
 class FolderBaseResponse(FolderBase):
@@ -35,4 +36,4 @@ class FolderInDB(FolderInDBBase):
     id: int
     owner_id: int
     created_at: datetime.date
-    parent_id: int
+    parent_id: Optional[int]
