@@ -35,8 +35,6 @@ def get_folder(
     folder = queries.get_folder_by_path(db, folder_path, int(current_user.id))
     if not folder:
         raise HTTPException(status_code=404, detail="Folder not found")
-    if folder.owner_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Folder not found")
     subfolders = queries.get_subfolders_by_id(db, folder.id)
     files = queries.get_files_by_folder_id(db, folder.id)
     return {"folder": folder, "items": {"folders": subfolders, "files": files}}
@@ -72,7 +70,7 @@ async def delete_folder(
     if not folder:
         raise HTTPException(status_code=404, detail="Folder not found")
     if folder.path == "/":
-        raise HTTPException(status_code=404, detail="Cannot delete root folder")
+        raise HTTPException(status_code=403, detail="Cannot delete root folder")
     files = queries.get_files_by_folder_recursive(db, folder.id)
     files_to_delete = [file.uuid for file in files] if files else []
 

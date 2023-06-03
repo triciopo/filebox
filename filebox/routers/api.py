@@ -6,7 +6,6 @@ from starlette.responses import FileResponse
 from filebox import storage
 from filebox.core import queries
 from filebox.core.auth import CurrentUser
-from filebox.core.config import settings
 from filebox.core.database import DBSession
 from filebox.rate_limiter import limiter
 from filebox.schemas.file import FileBaseResponse, FilePath
@@ -82,16 +81,14 @@ async def upload_file(
     uuid = uuid4()
 
     folder = queries.get_folder_by_path(db, path, int(current_user.id))
-    path = str(path).rstrip("/") + "/" + str(file.filename)
     if not folder:
-        raise HTTPException(status_code=400, detail="Folder not found")
+        raise HTTPException(status_code=404, detail=f"Folder {path} not found")
+    path = str(path).rstrip("/") + "/" + str(file.filename)
     if queries.get_file_by_path(db, path, int(current_user.id)):
         raise HTTPException(status_code=409, detail="File already exists")
     size = await storage.get_file_size(file)
     current_user_used_space = queries.get_user_used_space(db, int(current_user.id))
 
-    if size > settings.SIZE_LIMIT:
-        raise HTTPException(status_code=413, detail="File size limit exceeded")
     if current_user_used_space + size > current_user.storage_space:
         raise HTTPException(status_code=413, detail="Storage space limit exceeded")
     await storage.upload_file(uuid, file)
@@ -121,13 +118,11 @@ async def upload_batch(
     """Upload a batch of files"""
     folder = queries.get_folder_by_path(db, path, int(current_user.id))
     if not folder:
-        raise HTTPException(status_code=400, detail="Folder not found")
+        raise HTTPException(status_code=404, detail=f"Folder {path} not found")
     current_user_used_space = queries.get_user_used_space(db, int(current_user.id))
     size = await storage.get_files_size(files)
     if current_user_used_space + sum(size) > current_user.storage_space:
         raise HTTPException(status_code=413, detail="Storage space limit exceeded")
-    if sum(size) > settings.SIZE_LIMIT:
-        raise HTTPException(status_code=413, detail="File size limit exceeded")
     uuids = [uuid4() for _ in range(len(files))]
 
     await storage.upload_files(uuids, files)

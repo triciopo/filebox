@@ -58,15 +58,6 @@ def test_user(client):
 
 
 @pytest.fixture()
-def access_token(client, test_user):
-    response = client.post(
-        "/api/v1/token",
-        data={"username": test_user["username"], "password": test_user["password"]},
-    )
-    return response.json()["access_token"]
-
-
-@pytest.fixture()
 def test_super_user(session):
     from filebox.core.auth import get_hashed_password
     from filebox.models.user import User
@@ -86,6 +77,15 @@ def test_super_user(session):
 
 
 @pytest.fixture()
+def access_token(client, test_user):
+    response = client.post(
+        "/api/v1/token",
+        data={"username": test_user["username"], "password": test_user["password"]},
+    )
+    return response.json()["access_token"]
+
+
+@pytest.fixture()
 def super_access_token(client, test_super_user):
     response = client.post(
         "/api/v1/token",
@@ -95,3 +95,28 @@ def super_access_token(client, test_super_user):
         },
     )
     return response.json()["access_token"]
+
+
+@pytest.fixture()
+def test_file(client, access_token):
+    file_content = b"some file content"
+    files = {"file": ("file.txt", file_content)}
+    file_post = client.post(
+        "/api/v1/files",
+        files=files,
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    file = file_post.json()
+
+    return file
+
+
+@pytest.fixture()
+def test_folder(client, access_token):
+    folder_post = client.post(
+        "/api/v1/folders",
+        json={"path": "/testfolder"},
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    folder_path = folder_post.json()["path"]
+    return folder_path

@@ -43,6 +43,15 @@ def test_get_user(client, test_user, super_access_token):
     assert response.json()["created_at"] == test_user["created_at"]
 
 
+def test_get_user_no_permission(client, access_token, test_super_user):
+    response = client.get(
+        f"/api/v1/users/{test_super_user.id}",
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+    assert response.status_code == 404
+    assert response.json() == {"detail": f"User {test_super_user.id} not found"}
+
+
 def test_get_user_not_authenticated(client):
     response = client.get("/api/v1/users/5")
     assert response.status_code == 401
@@ -59,9 +68,7 @@ def test_get_user_not_found(client, super_access_token):
 
 def test_create_user(client):
     user_data = {
-        "id": "1",
         "username": "newuser",
-        "created_at": str(date.today()),
         "email": "new_email@mail.com",
         "password": "test",
     }
@@ -76,6 +83,18 @@ def test_create_existing_user(client, test_user):
     response = client.post("/api/v1/users", json=test_user)
     assert response.status_code == 400
     assert response.json()["detail"] == "User already exists"
+
+
+def test_create_user_existing_email(client, test_user):
+    user_data = {
+        "username": "newuser",
+        "email": "testemail@mail.com",
+        "password": "test",
+    }
+    response = client.post("/api/v1/users", json=user_data)
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Email already in use"}
 
 
 def test_update_user(client, test_user, access_token):
