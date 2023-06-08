@@ -9,10 +9,10 @@ from starlette.responses import Response
 from starlette.types import ASGIApp
 
 from filebox.core.config import settings
-from filebox.core.database import create_tables
+from filebox.core.database import Base, engine
 from filebox.rate_limiter import limiter
-from filebox.routers.api import file_router
 from filebox.routers.auth import auth_router
+from filebox.routers.files import file_router
 from filebox.routers.folders import folder_router
 from filebox.routers.users import user_router
 
@@ -27,12 +27,7 @@ class LimitUploadSize(BaseHTTPMiddleware):
     ) -> Response:
         if request.method == "POST":
             content_length = request.headers.get("content-length")
-            if not content_length:
-                return Response(
-                    status_code=status.HTTP_411_LENGTH_REQUIRED,
-                    content="No content length",
-                )
-            if int(content_length) > self.max_size:
+            if content_length and int(content_length) > self.max_size:
                 return Response(
                     status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
                     content="File too large",
@@ -40,11 +35,7 @@ class LimitUploadSize(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-app = FastAPI(
-    title="filebox",
-)
-
-create_tables()
+app = FastAPI(title="filebox", docs_url=settings.DOCS_URL, redoc_url=settings.REDOC_URL)
 
 app.add_middleware(
     CORSMiddleware,
@@ -63,3 +54,9 @@ app.include_router(file_router, prefix=settings.API_PREFIX, tags=["files"])
 app.include_router(folder_router, prefix=settings.API_PREFIX, tags=["folders"])
 app.include_router(user_router, prefix=settings.API_PREFIX, tags=["users"])
 app.include_router(auth_router, prefix=settings.API_PREFIX, tags=["auth"])
+
+
+@app.on_event("startup")
+async def create_tables() -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)

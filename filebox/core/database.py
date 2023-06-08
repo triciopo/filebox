@@ -1,35 +1,34 @@
-from typing import Annotated, Generator
+from collections.abc import AsyncGenerator
+from typing import Annotated
 
 from fastapi import Depends
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, declarative_base, sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import declarative_base
 
 from filebox.core.config import settings
 
 
-def get_db_url(env) -> str:
+def get_db_url(env: str) -> str:
     if env == "tests":
-        return "sqlite:///./test.db"
-    return f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_SERVER}/{settings.POSTGRES_DB}"
+        return "sqlite+aiosqlite:///test.db"
+    return f"postgresql+asyncpg://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_SERVER}/{settings.POSTGRES_DB}"
 
 
-SQLALCHEMY_DATABASE_URL = get_db_url(settings.ENV)
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+engine = create_async_engine(
+    get_db_url(settings.ENV),
+    future=True,
+    echo=False,
+)
+
+AsyncSessionFactory = async_sessionmaker(
+    engine, autoflush=False, expire_on_commit=False, class_=AsyncSession
+)
 
 
-def get_db() -> Generator:
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+async def get_db() -> AsyncGenerator:
+    async with AsyncSessionFactory() as session:
+        yield session
 
 
-DBSession = Annotated[Session, Depends(get_db)]
-
+DBSession = Annotated[AsyncSession, Depends(get_db)]
 Base = declarative_base()
-
-
-def create_tables():
-    Base.metadata.create_all(bind=engine)

@@ -5,10 +5,12 @@ pydantic[dotenv]
 pydantic[email]
 starlette
 httpx
-psycopg2
+asyncpg
 aiofiles
 aioshutil
 uvicorn
 slowapi
 passlib[bcrypt]
 python-jose
+aiosqlite
+pytest_asyncio

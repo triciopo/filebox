@@ -1,49 +1,53 @@
-from uuid import uuid4
+import uuid
+from typing import Sequence
 
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from starlette.responses import FileResponse
 
 from filebox import storage
-from filebox.core import queries
 from filebox.core.auth import CurrentUser
 from filebox.core.database import DBSession
+from filebox.models import file
 from filebox.rate_limiter import limiter
 from filebox.schemas.file import FileBaseResponse, FilePath
 from filebox.schemas.folder import FolderPath
+from filebox.services import files as service
+from filebox.services import folders as folder_service
+from filebox.services import users as user_service
 
 file_router = APIRouter()
 
 
 @file_router.get("/")
-def root() -> dict:
+async def root() -> dict:
     """Main path"""
     return {"success": True}
 
 
 @file_router.get("/files", response_model=list[FileBaseResponse])
-def get_files(
+async def get_files(
     current_user: CurrentUser,
     db: DBSession,
     skip: int = 0,
     limit: int = 100,
-) -> list[FileBaseResponse]:
+) -> Sequence[file.File]:
     """Fetch all files"""
-    return queries.get_files_by_id(
+    return await service.get_files_by_id(
         db,
-        int(current_user.id),
+        current_user.id,
         skip=skip,
         limit=limit,
     )
 
 
-@file_router.get("/files{file_path:path}/download", response_model=None)
+@file_router.get("/files{file_path:path}/download")
 async def download_file(
     file_path: FilePath,
     current_user: CurrentUser,
     db: DBSession,
 ) -> FileResponse:
     """Download a file given an path"""
-    file_db = queries.get_file_by_path(db, file_path, current_user.id)
+    file_db = await service.get_file_by_path(db, file_path, int(current_user.id))
     if not file_db:
         raise HTTPException(status_code=404, detail=f"File {file_path} not found")
     file = await storage.get_file(file_db.uuid)
@@ -55,13 +59,13 @@ async def download_file(
 
 
 @file_router.get("/files{file_path:path}", response_model=FileBaseResponse)
-def get_file(
+async def get_file(
     file_path: FilePath,
     current_user: CurrentUser,
     db: DBSession,
 ) -> FileBaseResponse:
     """Fetch a file given an path"""
-    file = queries.get_file_by_path(db, file_path, int(current_user.id))
+    file = await service.get_file_by_path(db, file_path, int(current_user.id))
     if not file:
         raise HTTPException(status_code=404, detail=f"File {file_path} not found")
     return file
@@ -73,33 +77,35 @@ async def upload_file(
     request: Request,
     current_user: CurrentUser,
     db: DBSession,
-    path: FolderPath = "/",
+    path: FolderPath = FolderPath("/"),
     file: UploadFile = File(...),
 ) -> FileBaseResponse:
     """Upload a file"""
     mime_type = file.content_type or "application/octet-stream"
-    uuid = uuid4()
+    id = uuid.uuid4()
 
-    folder = queries.get_folder_by_path(db, path, int(current_user.id))
+    folder = await folder_service.get_folder_by_path(db, path, int(current_user.id))
     if not folder:
         raise HTTPException(status_code=404, detail=f"Folder {path} not found")
-    path = str(path).rstrip("/") + "/" + str(file.filename)
-    if queries.get_file_by_path(db, path, int(current_user.id)):
+    full_path = str(path).rstrip("/") + "/" + str(file.filename)
+    if await service.get_file_by_path(db, full_path, int(current_user.id)):
         raise HTTPException(status_code=409, detail="File already exists")
     size = await storage.get_file_size(file)
-    current_user_used_space = queries.get_user_used_space(db, int(current_user.id))
+    current_user_used_space = await user_service.get_user_used_space(
+        db, current_user.id
+    )
 
     if current_user_used_space + size > current_user.storage_space:
         raise HTTPException(status_code=413, detail="Storage space limit exceeded")
-    await storage.upload_file(uuid, file)
-    return queries.create_file(
+    await storage.upload_file(id, file)
+    return await service.create_file(
         db,
-        uuid,
+        id,
         str(file.filename),
-        path,
+        full_path,
         folder.id,
         size,
-        int(current_user.id),
+        current_user.id,
         mime_type,
     )
 
@@ -112,35 +118,37 @@ async def upload_batch(
     request: Request,
     current_user: CurrentUser,
     db: DBSession,
-    path: FolderPath = "/",
-    files: list[UploadFile] = File(...),
-) -> list[FileBaseResponse]:
+    path: FolderPath = FolderPath("/"),
+    files: Sequence[UploadFile] = File(...),
+) -> list[file.File]:
     """Upload a batch of files"""
-    folder = queries.get_folder_by_path(db, path, int(current_user.id))
+    folder = await folder_service.get_folder_by_path(db, path, int(current_user.id))
     if not folder:
         raise HTTPException(status_code=404, detail=f"Folder {path} not found")
-    current_user_used_space = queries.get_user_used_space(db, int(current_user.id))
+    current_user_used_space = await user_service.get_user_used_space(
+        db, current_user.id
+    )
     size = await storage.get_files_size(files)
     if current_user_used_space + sum(size) > current_user.storage_space:
         raise HTTPException(status_code=413, detail="Storage space limit exceeded")
-    uuids = [uuid4() for _ in range(len(files))]
+    uuids = [uuid.uuid4() for _ in range(len(files))]
 
     await storage.upload_files(uuids, files)
-    return queries.create_batch_files(
-        db, files, path, size, uuids, folder.id, int(current_user.id)
+    return await service.create_batch_files(
+        db, files, path, size, uuids, folder.id, current_user.id
     )
 
 
-@file_router.delete("/files{file_path:path}", response_model=None)
+@file_router.delete("/files{file_path:path}")
 async def delete_file(
     file_path: FilePath,
     current_user: CurrentUser,
     db: DBSession,
 ) -> dict:
     """Delete a file given an path"""
-    file = queries.get_file_by_path(db, file_path, current_user.id)
+    file = await service.get_file_by_path(db, file_path, current_user.id)
     if not file:
         raise HTTPException(status_code=404, detail=f"File {file_path} not found")
     await storage.delete_file(file.uuid)
-    queries.delete_file(db, file.uuid)
+    await service.delete_file(db, file.uuid)
     return {"success": True, "message": "File deleted"}

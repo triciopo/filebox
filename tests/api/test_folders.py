@@ -1,11 +1,16 @@
-def test_getfolders_unauthenticated(client):
-    response = client.get("/api/v1/folders")
+import pytest
+
+
+@pytest.mark.asyncio
+async def test_getfolders_unauthenticated(client):
+    response = await client.get("/api/v1/folders")
 
     assert response.status_code == 401
 
 
-def test_getfolders(client, access_token, test_folder):
-    response = client.get(
+@pytest.mark.asyncio
+async def test_getfolders(client, access_token, test_folder):
+    response = await client.get(
         "/api/v1/folders", headers={"Authorization": f"Bearer {access_token}"}
     )
     assert response.status_code == 200
@@ -14,14 +19,16 @@ def test_getfolders(client, access_token, test_folder):
     assert response.json()[1]["path"] == "/testfolder"
 
 
-def test_create_folder_unauthenticated(client):
-    response = client.post("/api/v1/folders", data={"path": "/testfolder"})
+@pytest.mark.asyncio
+async def test_create_folder_unauthenticated(client):
+    response = await client.post("/api/v1/folders", data={"path": "/testfolder"})
 
     assert response.status_code == 401
 
 
-def test_create_folder(client, access_token):
-    response = client.post(
+@pytest.mark.asyncio
+async def test_create_folder(client, access_token):
+    response = await client.post(
         "/api/v1/folders",
         json={"path": "/folder"},
         headers={"Authorization": f"Bearer {access_token}"},
@@ -30,8 +37,9 @@ def test_create_folder(client, access_token):
     assert response.json()["path"] == "/folder"
 
 
-def test_create_folder_already_exists(client, access_token, test_folder):
-    response = client.post(
+@pytest.mark.asyncio
+async def test_create_folder_already_exists(client, access_token, test_folder):
+    response = await client.post(
         "/api/v1/folders",
         json={"path": "/testfolder"},
         headers={"Authorization": f"Bearer {access_token}"},
@@ -41,52 +49,59 @@ def test_create_folder_already_exists(client, access_token, test_folder):
     assert response.json() == {"detail": "Folder already exists"}
 
 
-def test_get_folder_unauthenticated(client):
-    response = client.get("/api/v1/folders/testfolder")
+@pytest.mark.asyncio
+async def test_get_folder_unauthenticated(client):
+    response = await client.get("/api/v1/folders/testfolder")
 
     assert response.status_code == 401
 
 
-def test_get_folder_not_found(client, access_token):
-    response = client.get(
+@pytest.mark.asyncio
+async def test_get_folder_not_found(client, access_token):
+    response = await client.get(
         "/api/v1/folders/folder",
         headers={"Authorization": f"Bearer {access_token}"},
     )
     assert response.status_code == 404
 
 
-def test_get_folder(client, access_token, test_folder):
-    response = client.get(
+@pytest.mark.asyncio
+async def test_get_folder(client, access_token, test_folder):
+    response = await client.get(
         "/api/v1/folders/testfolder",
         headers={"Authorization": f"Bearer {access_token}"},
     )
     assert response.status_code == 200
 
 
-def test_delete_folder_unauthenticated(client):
-    response = client.delete("/api/v1/folders/testfolder")
+@pytest.mark.asyncio
+async def test_delete_folder_unauthenticated(client):
+    response = await client.delete("/api/v1/folders/testfolder")
 
     assert response.status_code == 401
 
 
-def test_delete_folder_not_found(client, access_token):
-    response = client.delete(
+@pytest.mark.asyncio
+async def test_delete_folder_not_found(client, access_token):
+    response = await client.delete(
         "/api/v1/folders/folder",
         headers={"Authorization": f"Bearer {access_token}"},
     )
     assert response.status_code == 404
 
 
-def test_delete_folder(client, access_token, test_folder):
-    response = client.delete(
+@pytest.mark.asyncio
+async def test_delete_folder(client, access_token, test_folder):
+    response = await client.delete(
         "/api/v1/folders/testfolder",
         headers={"Authorization": f"Bearer {access_token}"},
     )
     assert response.status_code == 200
 
 
-def test_delete_root_folder(client, access_token):
-    response = client.delete(
+@pytest.mark.asyncio
+async def test_delete_root_folder(client, access_token):
+    response = await client.delete(
         "/api/v1/folders/",
         headers={"Authorization": f"Bearer {access_token}"},
     )

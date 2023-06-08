@@ -1,6 +1,6 @@
 import asyncio
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Sequence
 from uuid import UUID
 
 import aiofiles.os
@@ -24,7 +24,7 @@ async def upload_file(uuid: UUID, file: UploadFile) -> None:
         raise HTTPException(status_code=500)
 
 
-async def upload_files(uuids: list[UUID], files: list[UploadFile]) -> None:
+async def upload_files(uuids: list[UUID], files: Sequence[UploadFile]) -> None:
     """Upload a list of files concurrently"""
     upload_tasks = [upload_file(uuid, file) for uuid, file in zip(uuids, files)]
     await asyncio.gather(*upload_tasks)
@@ -48,7 +48,7 @@ async def get_file_size(file: UploadFile) -> int:
     return file_size
 
 
-async def get_files_size(files: list[UploadFile]) -> list[int]:
+async def get_files_size(files: Sequence[UploadFile]) -> list[int]:
     """Get the size of a list of files in bytes"""
     tasks = [get_file_size(file) for file in files]
     sizes = await asyncio.gather(*tasks)

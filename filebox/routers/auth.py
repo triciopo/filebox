@@ -13,12 +13,12 @@ auth_router = APIRouter()
 
 
 @auth_router.post("/token", response_model=Token)
-def access_token(
+async def access_token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: DBSession,
 ) -> dict:
     """Get access token"""
-    user = authenticate_user(form_data.username, form_data.password, db)
+    user = await authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(
             status_code=401,

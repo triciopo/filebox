@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     STORAGE_DIR: str = "uploads/"
     SIZE_LIMIT: int = 104857600
     DEFAULT_STORAGE_SPACE: int = 1024 * 1024 * 1024
+
+    REDOC_URL: str = "/redoc"
+    DOCS_URL: str = "/docs"
     API_PREFIX: str = "/api/v1"
     API_SECRET_KEY: str = secrets.token_urlsafe(32)
     API_ALGORITHM: str = "HS256"

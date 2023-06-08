@@ -1,5 +1,9 @@
-def test_login_with_correct_credentials(client, test_user):
-    response = client.post(
+import pytest
+
+
+@pytest.mark.asyncio
+async def test_login_with_correct_credentials(client, test_user):
+    response = await client.post(
         "/api/v1/token",
         data={"username": test_user["username"], "password": test_user["password"]},
     )
@@ -7,8 +11,9 @@ def test_login_with_correct_credentials(client, test_user):
     assert response.json()["access_token"]
 
 
-def test_login_with_incorrect_credentials(client, test_user):
-    response = client.post(
+@pytest.mark.asyncio
+async def test_login_with_incorrect_credentials(client, test_user):
+    response = await client.post(
         "/api/v1/token",
         data={"username": test_user["username"], "password": "wrong_password"},
     )
