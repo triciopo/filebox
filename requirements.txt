@@ -32,8 +32,6 @@ ecdsa==0.18.0
     # via python-jose
 email-validator==2.0.0.post2
     # via pydantic
-exceptiongroup==1.1.1
-    # via pytest
 fastapi==0.95.2
     # via -r requirements.in
 greenlet==2.0.2
@@ -94,14 +92,12 @@ sniffio==1.3.0
     #   anyio
     #   httpcore
     #   httpx
-sqlalchemy==2.0.15
+sqlalchemy==2.0.17
     # via -r requirements.in
 starlette==0.27.0
     # via
     #   -r requirements.in
     #   fastapi
-tomli==2.0.1
-    # via pytest
 typing-extensions==4.5.0
     # via
     #   limits
