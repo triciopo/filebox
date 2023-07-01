@@ -32,9 +32,7 @@ ecdsa==0.18.0
     # via python-jose
 email-validator==2.0.0.post2
     # via pydantic
-exceptiongroup==1.1.1
-    # via pytest
-fastapi==0.95.2
+fastapi==0.99.0
     # via -r requirements.in
 greenlet==2.0.2
     # via sqlalchemy
@@ -100,10 +98,9 @@ starlette==0.27.0
     # via
     #   -r requirements.in
     #   fastapi
-tomli==2.0.1
-    # via pytest
 typing-extensions==4.5.0
     # via
+    #   fastapi
     #   limits
     #   pydantic
     #   sqlalchemy
