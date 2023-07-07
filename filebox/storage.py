@@ -1,4 +1,5 @@
 import asyncio
+import os
 from pathlib import Path
 from typing import Optional, Sequence
 from uuid import UUID
@@ -14,8 +15,9 @@ STORAGE_DIR = settings.STORAGE_DIR
 
 async def upload_file(uuid: UUID, file: UploadFile) -> None:
     """Upload a file to the storage"""
-    file_path = f"{STORAGE_DIR}{uuid}/{uuid}{Path(str(file.filename)).suffix}"
-    Path(f"{STORAGE_DIR}{uuid}").mkdir(parents=True, exist_ok=True)
+    cur = os.getcwd()
+    file_path = f"{cur}/{STORAGE_DIR}{uuid}/{uuid}{Path(str(file.filename)).suffix}"
+    Path(f"{cur}/{STORAGE_DIR}{uuid}").mkdir(parents=True, exist_ok=True)
     try:
         async with aiofiles.open(file_path, "wb") as f:
             while chunk := await file.read(10485760):  # 10MB

@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 
 COPY ./filebox /app/filebox
 
-CMD ["uvicorn", "filebox.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "filebox.main:app", "--workers", "1", "--host", "0.0.0.0", "--port", "8000"]
