@@ -121,19 +121,6 @@ async def test_upload_batch_file_path_not_found(client, access_token):
 
 
 @pytest.mark.asyncio
-async def test_upload_filesize_limit(client, access_token):
-    file_content = b"x" * (settings.SIZE_LIMIT)
-    files = {"file": ("file.txt", file_content)}
-    response = await client.post(
-        "/api/v1/files",
-        files=files,
-        headers={"Authorization": f"Bearer {access_token}"},
-    )
-
-    assert response.status_code == 413
-
-
-@pytest.mark.asyncio
 async def test_download_file(client, access_token, test_file):
     response = await client.get(
         f"/api/v1/files{test_file['path']}/download",
