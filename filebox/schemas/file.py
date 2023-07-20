@@ -1,16 +1,13 @@
 import datetime
-from uuid import UUID
+from typing import Annotated
 
-from pydantic import BaseModel, ConstrainedStr
+from pydantic import UUID4, BaseModel, ConfigDict, constr
 
-
-class FilePath(ConstrainedStr):
-    min_length = 1
-    max_length = 96
+FilePath = Annotated[str, constr(min_length=1, max_length=96)]
 
 
 class FileBase(BaseModel):
-    uuid: UUID
+    uuid: UUID4
     name: str
     path: FilePath
     folder_id: int
@@ -21,5 +18,4 @@ class FileBase(BaseModel):
 
 
 class FileBaseResponse(FileBase):
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

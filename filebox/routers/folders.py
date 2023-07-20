@@ -6,7 +6,12 @@ from filebox import storage
 from filebox.core.auth import CurrentUser
 from filebox.core.database import DBSession
 from filebox.models.folder import Folder
-from filebox.schemas.folder import FolderBaseResponse, FolderCreate, FolderPath
+from filebox.schemas.folder import (
+    FolderBaseResponse,
+    FolderCreate,
+    FolderPath,
+    ListFolderResponse,
+)
 from filebox.services import files as file_service
 from filebox.services import folders as service
 
@@ -26,12 +31,12 @@ async def get_folders(
     )
 
 
-@folder_router.get("/folders{path:path}")
+@folder_router.get("/folders{path:path}", response_model=ListFolderResponse)
 async def get_folder(
     path: FolderPath,
     current_user: CurrentUser,
     db: DBSession,
-) -> dict:
+) -> dict[str, object]:
     """Fetch a folder given a path"""
     folder = await service.get_folder_by_path(db, path, int(current_user.id))
     if not folder:

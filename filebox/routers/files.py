@@ -46,7 +46,7 @@ async def download_file(
     current_user: CurrentUser,
     db: DBSession,
 ) -> FileResponse:
-    """Download a file given an path"""
+    """Download a file given a path"""
     file_db = await service.get_file_by_path(db, file_path, int(current_user.id))
     if not file_db:
         raise HTTPException(status_code=404, detail=f"File {file_path} not found")
@@ -119,7 +119,7 @@ async def upload_batch(
     current_user: CurrentUser,
     db: DBSession,
     path: FolderPath = FolderPath("/"),
-    files: Sequence[UploadFile] = File(...),
+    files: list[UploadFile] = File(...),
 ) -> list[file.File]:
     """Upload a batch of files"""
     folder = await folder_service.get_folder_by_path(db, path, int(current_user.id))
