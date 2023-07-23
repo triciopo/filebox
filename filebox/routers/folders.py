@@ -6,7 +6,8 @@ from filebox import storage
 from filebox.core.auth import CurrentUser
 from filebox.core.database import DBSession
 from filebox.models.folder import Folder
-from filebox.schemas.folder import FolderBaseResponse, FolderCreate, FolderPath
+from filebox.schemas.folder import FolderBaseResponse, FolderCreate, ListFolderResponse
+from filebox.schemas.types import FolderPath
 from filebox.services import files as file_service
 from filebox.services import folders as service
 
@@ -26,14 +27,14 @@ async def get_folders(
     )
 
 
-@folder_router.get("/folders{path:path}")
+@folder_router.get("/folders{folder_path:path}", response_model=ListFolderResponse)
 async def get_folder(
-    path: FolderPath,
     current_user: CurrentUser,
     db: DBSession,
-) -> dict:
+    folder_path: FolderPath,
+) -> dict[str, object]:
     """Fetch a folder given a path"""
-    folder = await service.get_folder_by_path(db, path, int(current_user.id))
+    folder = await service.get_folder_by_path(db, folder_path, int(current_user.id))
     if not folder:
         raise HTTPException(status_code=404, detail="Folder not found")
     subfolders = await service.get_subfolders_by_id(db, folder.id)
@@ -43,9 +44,9 @@ async def get_folder(
 
 @folder_router.post("/folders", status_code=201, response_model=FolderBaseResponse)
 async def create_folder(
-    folder: FolderCreate,
     current_user: CurrentUser,
     db: DBSession,
+    folder: FolderCreate,
 ) -> FolderBaseResponse:
     """Create a new folder"""
     if await service.get_folder_by_path(db, folder.path, int(current_user.id)):
@@ -62,14 +63,14 @@ async def create_folder(
     return await service.create_folder(db, cleaned_path, int(current_user.id), id)
 
 
-@folder_router.delete("/folders{path:path}")
+@folder_router.delete("/folders{folder_path:path}")
 async def delete_folder(
-    path: FolderPath,
     current_user: CurrentUser,
     db: DBSession,
+    folder_path: FolderPath,
 ) -> dict:
     """Delete a folder"""
-    folder = await service.get_folder_by_path(db, path, int(current_user.id))
+    folder = await service.get_folder_by_path(db, folder_path, int(current_user.id))
     if not folder:
         raise HTTPException(status_code=404, detail="Folder not found")
     if folder.path == "/":
@@ -77,6 +78,6 @@ async def delete_folder(
     files = await service.get_files_by_folder_recursive(db, folder.id)
     files_to_delete = [file.uuid for file in files] if files else []
 
-    await service.delete_folder(db, path, int(current_user.id))
+    await service.delete_folder(db, folder_path, int(current_user.id))
     await storage.delete_files(files_to_delete)
     return {"success": True, "message": "Folder deleted"}

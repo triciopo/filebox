@@ -1,13 +1,10 @@
 import datetime
-from typing import Optional
+from typing import Optional, Union
 
-from pydantic import BaseModel, ConstrainedStr
+from pydantic import BaseModel, ConfigDict
 
-
-class FolderPath(ConstrainedStr):
-    regex = "^(?:\/(?:[\w\s]+\/)*[\w\s]+|\/)$"
-    min_length = 1
-    max_length = 96
+from filebox.schemas.file import FileBaseResponse
+from filebox.schemas.types import FolderPath
 
 
 class FolderBase(BaseModel):
@@ -15,8 +12,7 @@ class FolderBase(BaseModel):
 
 
 class FolderBaseResponse(FolderBase):
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FolderCreate(FolderBase):
@@ -28,12 +24,16 @@ class FolderUpdate(FolderBase):
 
 
 class FolderInDBBase(FolderBase):
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FolderInDB(FolderInDBBase):
     id: int
     owner_id: int
     created_at: datetime.date
-    parent_id: Optional[int]
+    parent_id: Optional[int] = None
+
+
+class ListFolderResponse(BaseModel):
+    folder: FolderBaseResponse
+    items: dict[str, list[Union[FolderBaseResponse, FileBaseResponse]]]

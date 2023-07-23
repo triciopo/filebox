@@ -3,6 +3,7 @@ fastapi
 SQLAlchemy
 pydantic[dotenv]
 pydantic[email]
+pydantic-settings
 starlette
 httpx
 asyncpg

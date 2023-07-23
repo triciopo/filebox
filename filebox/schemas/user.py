@@ -1,14 +1,15 @@
 import datetime
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
 
 class UserBase(BaseModel):
     username: str
     email: EmailStr
 
-    @validator("username")
+    @field_validator("username")
+    @classmethod
     def username_validator(cls, name):
         if not name.isalnum():
             raise ValueError("Username must be alphanumeric")
@@ -23,7 +24,8 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
-    @validator("password")
+    @field_validator("password")
+    @classmethod
     def pass_required(cls, password):
         if not password:
             raise ValueError("Password is required")
@@ -31,9 +33,10 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(UserBase):
-    password: Optional[str]
+    password: Optional[str] = None
 
-    @validator("password")
+    @field_validator("password")
+    @classmethod
     def pass_required(cls, password):
         if not password:
             raise ValueError("Password is required")
@@ -45,14 +48,11 @@ class UserBaseResponse(UserBase):
     storage_space: int
     used_space: int
     created_at: datetime.date
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserInDBBase(UserBase):
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserInDB(UserInDBBase):
