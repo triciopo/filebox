@@ -1,9 +1,8 @@
 import datetime
-from typing import Annotated
 
-from pydantic import UUID4, BaseModel, ConfigDict, constr
+from pydantic import UUID4, BaseModel, ConfigDict
 
-FilePath = Annotated[str, constr(min_length=1, max_length=96)]
+from filebox.schemas.types import FilePath
 
 
 class FileBase(BaseModel):

@@ -9,8 +9,8 @@ from filebox.core.auth import CurrentUser
 from filebox.core.database import DBSession
 from filebox.models import file
 from filebox.rate_limiter import limiter
-from filebox.schemas.file import FileBaseResponse, FilePath
-from filebox.schemas.folder import FolderPath
+from filebox.schemas.file import FileBaseResponse
+from filebox.schemas.types import FilePath, FolderPath
 from filebox.services import files as service
 from filebox.services import folders as folder_service
 from filebox.services import users as user_service
@@ -42,9 +42,9 @@ async def get_files(
 
 @file_router.get("/files{file_path:path}/download")
 async def download_file(
-    file_path: FilePath,
     current_user: CurrentUser,
     db: DBSession,
+    file_path: FilePath,
 ) -> FileResponse:
     """Download a file given a path"""
     file_db = await service.get_file_by_path(db, file_path, int(current_user.id))
@@ -60,9 +60,9 @@ async def download_file(
 
 @file_router.get("/files{file_path:path}", response_model=FileBaseResponse)
 async def get_file(
-    file_path: FilePath,
     current_user: CurrentUser,
     db: DBSession,
+    file_path: FilePath,
 ) -> FileBaseResponse:
     """Fetch a file given an path"""
     file = await service.get_file_by_path(db, file_path, int(current_user.id))
@@ -87,7 +87,7 @@ async def upload_file(
     folder = await folder_service.get_folder_by_path(db, path, int(current_user.id))
     if not folder:
         raise HTTPException(status_code=404, detail=f"Folder {path} not found")
-    full_path = str(path).rstrip("/") + "/" + str(file.filename)
+    full_path = path.rstrip("/") + "/" + str(file.filename)
     if await service.get_file_by_path(db, full_path, int(current_user.id)):
         raise HTTPException(status_code=409, detail="File already exists")
     size = await storage.get_file_size(file)
@@ -141,9 +141,9 @@ async def upload_batch(
 
 @file_router.delete("/files{file_path:path}")
 async def delete_file(
-    file_path: FilePath,
     current_user: CurrentUser,
     db: DBSession,
+    file_path: FilePath,
 ) -> dict:
     """Delete a file given an path"""
     file = await service.get_file_by_path(db, file_path, current_user.id)

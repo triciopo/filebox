@@ -1,14 +1,10 @@
 import datetime
-from typing import Annotated, Optional, Union
+from typing import Optional, Union
 
-from pydantic import BaseModel, ConfigDict, constr
+from pydantic import BaseModel, ConfigDict
 
 from filebox.schemas.file import FileBaseResponse
-
-FolderPath = Annotated[
-    str,
-    constr(pattern=r"^(?:\/(?:[\w\s]+\/)*[\w\s]+|\/)$", min_length=1, max_length=96),
-]
+from filebox.schemas.types import FolderPath
 
 
 class FolderBase(BaseModel):
