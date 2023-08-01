@@ -20,7 +20,7 @@ asyncpg==0.28.0
     # via -r requirements.in
 bcrypt==4.0.1
     # via passlib
-certifi==2023.5.7
+certifi==2023.7.22
     # via
     #   httpcore
     #   httpx
@@ -34,10 +34,6 @@ ecdsa==0.18.0
     # via python-jose
 email-validator==2.0.0.post2
     # via pydantic
-exceptiongroup==1.1.2
-    # via
-    #   anyio
-    #   pytest
 fastapi==0.100.0
     # via -r requirements.in
 greenlet==2.0.2
@@ -112,8 +108,6 @@ starlette==0.27.0
     # via
     #   -r requirements.in
     #   fastapi
-tomli==2.0.1
-    # via pytest
 typing-extensions==4.7.1
     # via
     #   fastapi
