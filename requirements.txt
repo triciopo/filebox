@@ -34,7 +34,7 @@ ecdsa==0.18.0
     # via python-jose
 email-validator==2.0.0.post2
     # via pydantic
-fastapi==0.100.0
+fastapi==0.100.1
     # via -r requirements.in
 greenlet==2.0.2
     # via sqlalchemy
