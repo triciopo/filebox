@@ -17,7 +17,9 @@ anyio==3.7.1
     #   fastapi
     #   httpx
     #   starlette
-asyncpg==0.28.0
+async-timeout==4.0.3
+    # via asyncpg
+asyncpg==0.29.0
     # via -r requirements.in
 bcrypt==4.0.1
     # via passlib
