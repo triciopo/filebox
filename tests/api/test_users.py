@@ -35,7 +35,7 @@ async def test_get_me_with_invalid_token(client):
         "/api/v1/users/me", headers={"Authorization": "Bearer invalid_token"}
     )
     assert response.status_code == 401
-    assert response.json()["detail"] == "Could not validate credentials"
+    assert response.json() == {"detail": "Not authenticated"}
 
 
 @pytest.mark.asyncio

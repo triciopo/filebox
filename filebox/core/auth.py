@@ -1,8 +1,10 @@
 import datetime
-from typing import Annotated, Union
+from typing import Annotated, Union, Optional, Dict
 
-from fastapi import Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.security import OAuth2
+from fastapi.security.utils import get_authorization_scheme_param
+from fastapi.openapi.models import OAuthFlows as OAuthFlowsModel
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
@@ -13,7 +15,38 @@ from filebox.schemas.token import TokenData
 from filebox.services import users as service
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_PREFIX}/token")
+
+
+class OAuth2PasswordBearerWithCookie(OAuth2):
+    def __init__(
+        self,
+        tokenUrl: str,
+        scheme_name: Optional[str] = None,
+        scopes: Optional[Dict[str, str]] = None,
+        auto_error: bool = True,
+    ):
+        if not scopes:
+            scopes = {}
+        flows = OAuthFlowsModel(password={"tokenUrl": tokenUrl, "scopes": scopes})
+        super().__init__(flows=flows, scheme_name=scheme_name, auto_error=auto_error)
+
+    async def __call__(self, request: Request) -> Optional[str]:
+        authorization: str = request.cookies.get("access_token")
+
+        scheme, param = get_authorization_scheme_param(authorization)
+        if not authorization or scheme.lower() != "bearer":
+            if self.auto_error:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Not authenticated",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+            else:
+                return None
+        return param
+
+
+oauth2_scheme = OAuth2PasswordBearerWithCookie(tokenUrl=f"{settings.API_PREFIX}/token")
 
 
 def create_access_token(
