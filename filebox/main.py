@@ -1,3 +1,6 @@
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
+
 from fastapi import FastAPI
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -11,7 +14,20 @@ from filebox.routers.files import file_router
 from filebox.routers.folders import folder_router
 from filebox.routers.users import user_router
 
-app = FastAPI(title="filebox", docs_url=settings.DOCS_URL, redoc_url=settings.REDOC_URL)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator:
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+
+
+app = FastAPI(
+    title="filebox",
+    docs_url=settings.DOCS_URL,
+    redoc_url=settings.REDOC_URL,
+    lifespan=lifespan,
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -28,9 +44,3 @@ app.include_router(file_router, prefix=settings.API_PREFIX, tags=["files"])
 app.include_router(folder_router, prefix=settings.API_PREFIX, tags=["folders"])
 app.include_router(user_router, prefix=settings.API_PREFIX, tags=["users"])
 app.include_router(auth_router, prefix=settings.API_PREFIX, tags=["auth"])
-
-
-@app.on_event("startup")
-async def create_tables() -> None:
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
