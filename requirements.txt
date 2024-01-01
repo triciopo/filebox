@@ -124,7 +124,7 @@ typing-extensions==4.8.0
     #   pydantic-core
     #   sqlalchemy
     #   uvicorn
-uvicorn==0.24.0.post1
+uvicorn==0.25.0
     # via -r requirements.in
 wrapt==1.15.0
     # via deprecated
