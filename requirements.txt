@@ -107,7 +107,7 @@ sniffio==1.3.0
     #   anyio
     #   dnspython
     #   httpx
-sqlalchemy==2.0.29
+sqlalchemy==2.0.30
     # via -r requirements.in
 starlette==0.37.2
     # via
