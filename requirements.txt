@@ -6,7 +6,7 @@
 #
 aiofiles==24.1.0
     # via -r requirements.in
-aioshutil==1.4
+aioshutil==1.5
     # via -r requirements.in
 aiosqlite==0.20.0
     # via -r requirements.in
