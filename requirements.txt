@@ -94,7 +94,7 @@ python-dotenv==1.0.0
     # via pydantic-settings
 python-jose==3.3.0
     # via -r requirements.in
-python-multipart==0.0.9
+python-multipart==0.0.12
     # via -r requirements.in
 rsa==4.9
     # via python-jose
